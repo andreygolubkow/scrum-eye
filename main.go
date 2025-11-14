@@ -1,32 +1,15 @@
 package main
 
 import (
-	"context"
-	"flag"
 	"fmt"
 	"os"
-	"time"
 
-	"dev-digest/console"
-	_ "dev-digest/modules/azureboards"
-	_ "dev-digest/modules/azurerepos"
-	// Side-effect imports to register modules (order affects rendering order)
-	_ "dev-digest/modules/summary" // register last so it can aggregate others
-	_ "dev-digest/modules/teamcity"
+	"scrum-eye/internal/cli"
 )
 
 func main() {
-	var cfgPath string
-	var noColor bool
-	flag.StringVar(&cfgPath, "config", "", "path to YAML config file (default: ./config.yaml or $DEV_DIGEST_CONFIG)")
-	flag.BoolVar(&noColor, "no-color", false, "disable colored output")
-	flag.Parse()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
-
-	if err := console.Run(ctx, cfgPath, noColor); err != nil {
-		fmt.Fprintln(os.Stderr, "dev-digest:", err)
+	if err := cli.Run(os.Args[1:]); err != nil {
+		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(1)
 	}
 }

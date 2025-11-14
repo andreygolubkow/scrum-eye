@@ -1,4 +1,4 @@
-module dev-digest
+module scrum-eye
 
 go 1.21
 
