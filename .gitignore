@@ -51,3 +51,6 @@ __debug_bin
 # Application specific
 *.log
 *.pid
+
+# Config
+config.yaml
