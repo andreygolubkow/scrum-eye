@@ -8,9 +8,10 @@ import (
 	"time"
 
 	"dev-digest/console"
-	// Side-effect imports to register modules
 	_ "dev-digest/modules/azureboards"
 	_ "dev-digest/modules/azurerepos"
+	// Side-effect imports to register modules (order affects rendering order)
+	_ "dev-digest/modules/summary" // register last so it can aggregate others
 	_ "dev-digest/modules/teamcity"
 )
 
