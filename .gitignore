@@ -47,8 +47,6 @@ temp/
 debug
 __debug_bin
 
-# Air (live reload tool)
-tmp/
 
 # Application specific
 *.log
