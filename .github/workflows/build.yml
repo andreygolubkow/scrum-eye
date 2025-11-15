@@ -1,0 +1,67 @@
+name: Build Go Project
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: [amd64]
+
+    env:
+      GO_VERSION: '1.22'
+      BINARY_NAME: 'scrum-eye'
+      MAIN_PACKAGE: './...'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Build (${{ matrix.goos }}-${{ matrix.goarch }})
+        run: |
+          mkdir -p dist
+          export GOOS=${{ matrix.goos }}
+          export GOARCH=${{ matrix.goarch }}
+
+          # расширение .exe для Windows
+          if [ "$GOOS" = "windows" ]; then
+            outfile="dist/${{ env.BINARY_NAME }}-${GOOS}-${GOARCH}.exe"
+          else
+            outfile="dist/${{ env.BINARY_NAME }}-${GOOS}-${GOARCH}"
+          fi
+
+          echo "Building to $outfile"
+          go build -v -o "$outfile" ${{ env.MAIN_PACKAGE }}
+
+      - name: Upload artifact (${{ matrix.goos }}-${{ matrix.goarch }})
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BINARY_NAME }}-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: |
+            dist/${{ env.BINARY_NAME }}-${{ matrix.goos }}-${{ matrix.goarch }}*
+          if-no-files-found: error
