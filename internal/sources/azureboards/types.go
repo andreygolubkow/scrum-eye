@@ -47,3 +47,20 @@ type workItemsListResponse struct {
 	Count int        `json:"count"`
 	Value []WorkItem `json:"value"`
 }
+
+type ODataWorkItemsResponse struct {
+	Value []ODataWorkItem `json:"value"`
+}
+
+type ODataWorkItem struct {
+	ID               int     `json:"WorkItemId"`
+	Title            string  `json:"Title"`
+	WorkItemType     string  `json:"WorkItemType,omitempty"`
+	State            string  `json:"State,omitempty"`
+	Priority         int     `json:"Priority,omitempty"`
+	Severity         string  `json:"Severity,omitempty"`
+	OriginalEstimate float32 `json:"OriginalEstimate,omitempty"`
+	RemainingWork    float32 `json:"RemainingWork,omitempty"`
+	CompletedWork    float32 `json:"CompletedWork,omitempty"`
+	CommentsCount    int     `json:"CommentsCount,omitempty"`
+}

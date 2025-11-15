@@ -9,30 +9,30 @@ import (
 
 // ensureDirExists проверяет, что директория существует,
 // и при необходимости предлагает её создать.
-func ensureDirExists(dirPath string, prompt string) error {
+func ensureDirExists(dirPath string, prompt string) (created bool, err error) {
 	info, err := os.Stat(dirPath)
 	if err == nil {
 		if info.IsDir() {
-			return nil
+			return false, nil
 		}
-		return fmt.Errorf("%s существует, но это не директория", dirPath)
+		return false, fmt.Errorf("%s существует, но это не директория", dirPath)
 	}
 
 	if !os.IsNotExist(err) {
-		return err
+		return false, err
 	}
 
 	// директории нет
 	if !askYesNo(prompt, false) {
-		return fmt.Errorf("директория %s не существует и не была создана", dirPath)
+		return false, fmt.Errorf("директория %s не существует и не была создана", dirPath)
 	}
 
 	if err := os.MkdirAll(dirPath, 0o755); err != nil {
-		return fmt.Errorf("не удалось создать директорию %s: %w", dirPath, err)
+		return false, fmt.Errorf("не удалось создать директорию %s: %w", dirPath, err)
 	}
 
 	fmt.Println("Создана директория:", dirPath)
-	return nil
+	return true, nil
 }
 
 // ensureGlobalConfig проверяет наличие global.yaml,
@@ -61,34 +61,35 @@ func ensureGlobalConfig(globalPath string) error {
 
 // ensureTeamConfig проверяет наличие config-файла команды,
 // и при отсутствии предлагает создать шаблон.
-func ensureTeamConfig(teamsDir, teamFile, teamName string) error {
-	if err := ensureDirExists(
+func ensureTeamConfig(teamsDir, teamFile, teamName string) (created bool, err error) {
+	dirCreated, err := ensureDirExists(
 		teamsDir,
-		fmt.Sprintf("Папка с командами (%s) не найдена. Создать её?", teamsDir),
-	); err != nil {
-		return err
+		fmt.Sprintf("Папка с командами (%s) не найдена. Создать её?", teamsDir))
+
+	if err != nil {
+		return false, err
 	}
 
-	_, err := os.Stat(teamFile)
+	_, err = os.Stat(teamFile)
 	if err == nil {
-		return nil
+		return dirCreated, nil
 	}
 	if !os.IsNotExist(err) {
-		return err
+		return false, err
 	}
 
 	msg := fmt.Sprintf("Файл конфигурации команды (%s) не найден. Создать шаблон для команды '%s'?",
 		teamFile, teamName)
 	if !askYesNo(msg, false) {
-		return fmt.Errorf("конфиг команды %s не существует и не был создан", teamName)
+		return false, fmt.Errorf("конфиг команды %s не существует и не был создан", teamName)
 	}
 
 	if err := writeTeamTemplate(teamFile, teamName); err != nil {
-		return err
+		return false, err
 	}
 
 	fmt.Println("Создан шаблон конфигурации команды:", teamFile)
-	return nil
+	return true, nil
 }
 
 // askYesNo задаёт вопрос пользователю и возвращает true/false.

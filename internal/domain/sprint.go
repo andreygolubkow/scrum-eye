@@ -1,5 +1,7 @@
 package domain
 
+import "time"
+
 type WorkItemType string
 
 const (
@@ -8,10 +10,11 @@ const (
 	WorkItemTask    WorkItemType = "Task"
 	WorkItemEpic    WorkItemType = "Epic"
 	WorkItemFeature WorkItemType = "Feature"
+	WorkItemUnknown WorkItemType = "Unknown"
 )
 
 type WorkItem struct {
-	ID   string
+	ID   int
 	Name string
 	Type WorkItemType
 }
@@ -19,5 +22,7 @@ type WorkItem struct {
 type Sprint struct {
 	ID        string
 	Name      string
+	StartDate *time.Time
+	EndDate   *time.Time
 	WorkItems []WorkItem
 }

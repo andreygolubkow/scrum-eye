@@ -3,8 +3,9 @@ package cli
 import (
 	"context"
 	"fmt"
-	collector "scrum-eye/internal/collector"
+	"scrum-eye/internal/collector"
 	"scrum-eye/internal/config"
+	"scrum-eye/internal/report"
 	"scrum-eye/internal/sources/azureboards"
 )
 
@@ -26,24 +27,10 @@ func Run(args []string) error {
 		return err
 	}
 
-	if err := ensureDirExists(paths.RootDir,
-		fmt.Sprintf("Папка с конфигами (%s) не найдена. Создать её?", paths.RootDir)); err != nil {
+	err = ensureConfigurationExists(paths)
+	if err != nil {
 		return err
 	}
-
-	if err := ensureGlobalConfig(paths.GlobalPath); err != nil {
-		return err
-	}
-
-	if err := ensureTeamConfig(paths.TeamsDir, paths.TeamFile, paths.TeamName); err != nil {
-		return err
-	}
-
-	fmt.Println()
-	fmt.Println("✅ Конфигурация готова к использованию:")
-	fmt.Println("  Root:   ", paths.RootDir)
-	fmt.Println("  Global: ", paths.GlobalPath)
-	fmt.Println("  Team:   ", paths.TeamFile)
 
 	cfg, err := config.Load(paths.GlobalPath, paths.TeamsDir, paths.TeamName)
 	if err != nil {
@@ -52,13 +39,39 @@ func Run(args []string) error {
 
 	boardsClient := azureboards.NewClient(cfg.Team.AzureDevOps)
 
-	collector := collector.NewCollector(boardsClient)
+	dataCollector := collector.NewCollector(boardsClient)
 
-	snapshot, err := collector.Collect(ctx)
+	project, err := dataCollector.Collect(ctx)
 
-	fmt.Println(snapshot)
-	fmt.Println(err)
+	report.PrintCurrentSprint(project)
 
 	defer ctx.Done()
+	return nil
+}
+
+func ensureConfigurationExists(paths ConfigPaths) error {
+	created, err := ensureDirExists(paths.RootDir,
+		fmt.Sprintf("Папка с конфигами (%s) не найдена. Создать её?", paths.RootDir))
+	if err != nil {
+		return err
+	}
+
+	if err := ensureGlobalConfig(paths.GlobalPath); err != nil {
+		return err
+	}
+
+	created, err = ensureTeamConfig(paths.TeamsDir, paths.TeamFile, paths.TeamName)
+	if err != nil {
+		return err
+	}
+
+	if created {
+		fmt.Println()
+		fmt.Println("✅ Конфигурация готова к использованию:")
+		fmt.Println("  Root:   ", paths.RootDir)
+		fmt.Println("  Global: ", paths.GlobalPath)
+		fmt.Println("  Team:   ", paths.TeamFile)
+	}
+
 	return nil
 }
